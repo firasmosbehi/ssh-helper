@@ -19,10 +19,10 @@ type MCPClientConfig struct {
 
 // Config is the user-facing configuration shape.
 type Config struct {
-	DataDir       string                    `mapstructure:"data_dir"`
-	SSHConfigPath string                    `mapstructure:"ssh_config_path"`
-	LogFormat     string                    `mapstructure:"log_format"`
-	LogLevel      string                    `mapstructure:"log_level"`
+	DataDir       string                     `mapstructure:"data_dir"`
+	SSHConfigPath string                     `mapstructure:"ssh_config_path"`
+	LogFormat     string                     `mapstructure:"log_format"`
+	LogLevel      string                     `mapstructure:"log_level"`
 	MCPClients    map[string]MCPClientConfig `mapstructure:"mcp_servers"`
 }
 

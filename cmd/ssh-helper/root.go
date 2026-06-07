@@ -10,11 +10,10 @@ import (
 )
 
 var (
-	version   = "dev"
-	verbose   int
-	jsonLogs  bool
-	cfgMgr    *config.Manager
-	cfgLoaded *config.Config
+	version  = "dev"
+	verbose  int
+	jsonLogs bool
+	cfgMgr   *config.Manager
 )
 
 func newRootCommand() *cobra.Command {
@@ -39,7 +38,6 @@ It also exposes and consumes MCP servers.`,
 			if err != nil {
 				return fmt.Errorf("load config: %w", err)
 			}
-			cfgLoaded = cfg
 
 			level := cfg.LogLevel
 			if verbose > 0 {

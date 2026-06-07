@@ -1,14 +1,13 @@
 package config
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestManagerInitAndLoad(t *testing.T) {
 	tmp := t.TempDir()
-	os.Setenv("HOME", tmp)
+	t.Setenv("HOME", tmp)
 	m, err := NewManager()
 	if err != nil {
 		t.Fatalf("new manager: %v", err)
@@ -36,7 +35,7 @@ func TestManagerInitAndLoad(t *testing.T) {
 
 func TestManagerSetAndGet(t *testing.T) {
 	tmp := t.TempDir()
-	os.Setenv("HOME", tmp)
+	t.Setenv("HOME", tmp)
 	m, err := NewManager()
 	if err != nil {
 		t.Fatalf("new manager: %v", err)
