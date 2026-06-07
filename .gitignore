@@ -1,5 +1,5 @@
-# Binaries
-ssh-helper
+# Binaries built at repo root
+/ssh-helper
 *.exe
 *.dll
 *.so
