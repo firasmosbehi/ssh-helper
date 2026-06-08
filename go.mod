@@ -2,6 +2,8 @@ module github.com/firasmosbehi/ssh-helper
 
 go 1.25.0
 
+toolchain go1.26.4
+
 require (
 	github.com/kevinburke/ssh_config v1.6.0
 	github.com/spf13/cobra v1.8.1
