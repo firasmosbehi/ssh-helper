@@ -63,6 +63,7 @@ It also exposes and consumes MCP servers.`,
 	root.AddCommand(newHostCommand())
 	root.AddCommand(newConnectCommand())
 	root.AddCommand(newKeyCommand())
+	root.AddCommand(newSyncCommand())
 
 	return root
 }

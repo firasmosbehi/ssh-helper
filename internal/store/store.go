@@ -17,4 +17,8 @@ type Store interface {
 	ListSyncJobs() ([]core.SyncJob, error)
 	SaveSyncJob(job core.SyncJob) error
 	DeleteSyncJob(id string) error
+
+	ListRuns() ([]core.JobRun, error)
+	SaveRun(run core.JobRun) error
+	DeleteRun(id string) error
 }

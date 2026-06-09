@@ -181,6 +181,49 @@ func (s *JSONStore) listJobsUnlocked() ([]core.SyncJob, error) {
 	return jobs, nil
 }
 
+// ListRuns returns all persisted job runs.
+func (s *JSONStore) ListRuns() ([]core.JobRun, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var runs []core.JobRun
+	if err := s.read("runs", &runs); err != nil {
+		return nil, err
+	}
+	return runs, nil
+}
+
+// SaveRun inserts or updates a job run by ID.
+func (s *JSONStore) SaveRun(run core.JobRun) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	runs, err := s.listRunsUnlocked()
+	if err != nil {
+		return err
+	}
+	runs = upsert(runs, run, func(a, b core.JobRun) bool { return a.ID == b.ID }, run)
+	return s.write("runs", runs)
+}
+
+// DeleteRun removes a job run by ID.
+func (s *JSONStore) DeleteRun(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	runs, err := s.listRunsUnlocked()
+	if err != nil {
+		return err
+	}
+	runs = remove(runs, func(r core.JobRun) bool { return r.ID == id })
+	return s.write("runs", runs)
+}
+
+func (s *JSONStore) listRunsUnlocked() ([]core.JobRun, error) {
+	var runs []core.JobRun
+	if err := s.read("runs", &runs); err != nil {
+		return nil, err
+	}
+	return runs, nil
+}
+
 func upsert[S ~[]E, E any](s S, item E, eq func(a, b E) bool, with E) S {
 	for i, v := range s {
 		if eq(v, item) {
