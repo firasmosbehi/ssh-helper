@@ -38,16 +38,16 @@ const (
 )
 
 type model struct {
-	state   state
-	width   int
-	height  int
-	cursor  int
-	filter  string
-	msg     string
+	state  state
+	width  int
+	height int
+	cursor int
+	filter string
+	msg    string
 
-	hosts   []core.Host
-	jobs    []core.SyncJob
-	keys    []ssh.KeyInfo
+	hosts []core.Host
+	jobs  []core.SyncJob
+	keys  []ssh.KeyInfo
 
 	cfgPath string
 }
