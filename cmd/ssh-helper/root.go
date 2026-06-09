@@ -64,6 +64,7 @@ It also exposes and consumes MCP servers.`,
 	root.AddCommand(newConnectCommand())
 	root.AddCommand(newKeyCommand())
 	root.AddCommand(newSyncCommand())
+	root.AddCommand(newTUICommand())
 
 	return root
 }
