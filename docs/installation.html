@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Installation - ssh-helper</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; color: #333; }
+    h1, h2, h3 { color: #7D56F4; }
+    a { color: #7D56F4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 4px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    ul { padding-left: 1.5rem; }
+    li { margin: 0.3rem 0; }
+  </style>
+</head>
+<body>
+  <p><a href="index.html">← Back to docs</a></p>
+  <h1>Installation</h1>
+
+<h2>Homebrew (macOS/Linux)</h2>
+
+<p>``<code>bash</p>
+<p>brew tap firasmosbehi/tap</p>
+<p>brew install ssh-helper</p>
+<p></code>`<code></p>
+
+<h2>Scoop (Windows)</h2>
+
+<p></code>`<code>powershell</p>
+<p>scoop bucket add ssh-helper https://github.com/firasmosbehi/scoop-bucket</p>
+<p>scoop install ssh-helper</p>
+<p></code>`<code></p>
+
+<h2>Go install</h2>
+
+<p></code>`<code>bash</p>
+<p>go install github.com/firasmosbehi/ssh-helper/cmd/ssh-helper@latest</p>
+<p></code>`<code></p>
+
+<h2>From source</h2>
+
+<p></code>`<code>bash</p>
+<p>git clone https://github.com/firasmosbehi/ssh-helper.git</p>
+<p>cd ssh-helper</p>
+<p>go build ./cmd/ssh-helper</p>
+<p></code>`<code></p>
+
+<h2>Requirements</h2>
+
+<ul>
+<li>Go 1.25+ (for building from source)</li>
+<li>OpenSSH client (</code>ssh<code>, </code>ssh-keygen<code>, </code>ssh-agent`)</li>
+<li>rsync (for sync jobs)</li>
+
+</body>
+</html>

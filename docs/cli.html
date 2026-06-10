@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cli - ssh-helper</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; color: #333; }
+    h1, h2, h3 { color: #7D56F4; }
+    a { color: #7D56F4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 4px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    ul { padding-left: 1.5rem; }
+    li { margin: 0.3rem 0; }
+  </style>
+</head>
+<body>
+  <p><a href="index.html">← Back to docs</a></p>
+  <h1>CLI Reference</h1>
+
+<p>ssh-helper is a unified CLI for SSH and rsync management.</p>
+
+<h2>Global flags</h2>
+
+<p>|------|-------------|</p>
+
+<h2>Commands</h2>
+
+<h3><code>config</code></h3>
+<p>Manage application configuration.</p>
+
+<ul>
+<li><code>config init</code> — Initialize default config files.</li>
+<li><code>config get <key></code> — Get a config value.</li>
+<li><code>config set <key> <value></code> — Set a config value.</li>
+<li><code>config edit</code> — Open config in <code>$EDITOR</code>.</li>
+
+<h3><code>host</code></h3>
+<p>Manage SSH hosts.</p>
+
+<ul>
+<li><code>host list</code> — List all hosts from <code>~/.ssh/config</code>.</li>
+<li><code>host show <name></code> — Show host details.</li>
+<li><code>host add <name> <hostname></code> — Add a new host.</li>
+<li><code>host remove <name></code> — Remove a host.</li>
+<li><code>host edit</code> — Open <code>~/.ssh/config</code> in <code>$EDITOR</code>.</li>
+<li><code>host connect <name></code> — Connect to a host interactively.</li>
+
+<h3><code>key</code></h3>
+<p>Manage SSH keys.</p>
+
+<ul>
+<li><code>key list</code> — List keys with fingerprints.</li>
+<li><code>key generate <name></code> — Generate a new key (ed25519 or rsa).</li>
+<li><code>key remove <name></code> — Remove a key pair.</li>
+<li><code>key copy-id <host> <key></code> — Copy public key to a remote host.</li>
+<li><code>key agent-add <name></code> — Add a key to the SSH agent.</li>
+
+<h3><code>sync</code></h3>
+<p>Run and manage rsync jobs.</p>
+
+<ul>
+<li><code>sync run <src> <dst></code> — Run a one-off rsync transfer.</li>
+<li><code>sync job create <name> <src> <dst></code> — Create a saved job.</li>
+<li><code>sync job list</code> — List saved jobs.</li>
+<li><code>sync job delete <id></code> — Delete a saved job.</li>
+<li><code>sync job run <id></code> — Run a saved job.</li>
+
+<h3><code>tui</code></h3>
+<p>Launch the interactive terminal UI.</p>
+
+<h3><code>gui</code></h3>
+<p>Launch the native desktop GUI.</p>
+
+<h3><code>mcp</code></h3>
+<p>MCP server and client commands.</p>
+
+<ul>
+<li><code>mcp serve</code> — Start the built-in MCP server over stdio.</li>
+<li><code>mcp servers</code> — List configured external MCP servers.</li>
+<li><code>mcp call <server> <tool> --args '{}'</code> — Call a tool on an external MCP server.</li>
+
+</body>
+</html>

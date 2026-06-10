@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security - ssh-helper</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; color: #333; }
+    h1, h2, h3 { color: #7D56F4; }
+    a { color: #7D56F4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { background: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 4px; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 8px; overflow-x: auto; }
+    ul { padding-left: 1.5rem; }
+    li { margin: 0.3rem 0; }
+  </style>
+</head>
+<body>
+  <p><a href="index.html">← Back to docs</a></p>
+  <h1>Security Model</h1>
+
+<h2>Data Storage</h2>
+
+<ul>
+<li>Configuration is stored in <code>~/.config/ssh-helper/</code>.</li>
+<li>Job history and keys metadata are stored in <code>~/.local/share/ssh-helper/</code>.</li>
+<li>SSH config edits create backups before modification.</li>
+<li>Generated private keys are written with <code>0o600</code> permissions.</li>
+
+<h2>Secrets</h2>
+
+<ul>
+<li>SSH key passphrases can be cached in the OS keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service).</li>
+<li>No plaintext password storage.</li>
+
+<h2>Process Safety</h2>
+
+<ul>
+<li>rsync and SSH commands are executed via <code>exec.Command</code> with explicit argument lists (no shell injection).</li>
+<li>MCP server tools validate inputs against declared schemas.</li>
+
+<h2>Networking</h2>
+
+<ul>
+<li>SSH connections use the standard OpenSSH client library (<code>golang.org/x/crypto/ssh</code>).</li>
+<li>Host key verification follows the user's <code>~/.ssh/known_hosts</code>.</li>
+
+</body>
+</html>
