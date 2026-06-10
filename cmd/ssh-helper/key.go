@@ -67,7 +67,7 @@ func newKeyRemoveCommand() *cobra.Command {
 		Short: "Remove an SSH key pair",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return ssh.RemoveKey(filepath.Join(sshDir(), args[0]))
+			return ssh.RemoveKey(filepath.Join(sshDir(), ssh.SanitizeKeyName(args[0])))
 		},
 	}
 }

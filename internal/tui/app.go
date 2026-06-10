@@ -1,16 +1,20 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/firasmosbehi/ssh-helper/internal/config"
 	"github.com/firasmosbehi/ssh-helper/internal/core"
+	"github.com/firasmosbehi/ssh-helper/internal/mcp"
 	"github.com/firasmosbehi/ssh-helper/internal/ssh"
 	"github.com/firasmosbehi/ssh-helper/internal/store"
+	mcpgo "github.com/mark3labs/mcp-go/mcp"
 )
 
 var (
@@ -35,7 +39,21 @@ const (
 	stateHosts
 	stateJobs
 	stateKeys
+	stateMCP
+	stateMCPTools
+	stateMCPArgs
+	stateMCPResult
 )
+
+type mcpToolsMsg struct {
+	tools []mcpgo.Tool
+	err   error
+}
+
+type mcpCallMsg struct {
+	result string
+	err    error
+}
 
 type model struct {
 	state  state
@@ -49,7 +67,13 @@ type model struct {
 	jobs  []core.SyncJob
 	keys  []ssh.KeyInfo
 
-	cfgPath string
+	cfgPath    string
+	mcpServers map[string]config.MCPClientConfig
+	mcpTools   []mcpgo.Tool
+	mcpResult  string
+	inputBuf   string
+	selectedServer string
+	selectedTool   string
 }
 
 func newModel() model {
@@ -60,8 +84,9 @@ func newModel() model {
 		path = os.ExpandEnv("$HOME/.ssh/config")
 	}
 	return model{
-		state:   stateMenu,
-		cfgPath: path,
+		state:      stateMenu,
+		cfgPath:    path,
+		mcpServers: c.MCPClients,
 	}
 }
 
@@ -75,6 +100,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		return m, nil
+	case mcpToolsMsg:
+		if msg.err != nil {
+			m.msg = fmt.Sprintf("Error: %v", msg.err)
+		} else {
+			m.mcpTools = msg.tools
+			m.state = stateMCPTools
+			m.cursor = 0
+			m.msg = ""
+		}
+		return m, nil
+	case mcpCallMsg:
+		if msg.err != nil {
+			m.msg = fmt.Sprintf("Error: %v", msg.err)
+			m.state = stateMCPResult
+		} else {
+			m.mcpResult = msg.result
+			m.state = stateMCPResult
+			m.msg = ""
+		}
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -86,7 +131,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "down", "j":
 			switch m.state {
 			case stateMenu:
-				if m.cursor < 3 {
+				if m.cursor < 4 {
 					m.cursor++
 				}
 			case stateHosts:
@@ -101,22 +146,51 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.keys)-1 {
 					m.cursor++
 				}
+			case stateMCP:
+				if m.cursor < len(mcpServerNames(m.mcpServers))-1 {
+					m.cursor++
+				}
+			case stateMCPTools:
+				if m.cursor < len(m.mcpTools)-1 {
+					m.cursor++
+				}
 			}
 		case "enter":
 			return m.handleEnter()
 		case "esc":
-			if m.state != stateMenu {
+			switch m.state {
+			case stateMCPResult:
+				m.state = stateMCPTools
+				m.cursor = 0
+				m.msg = ""
+			case stateMCPArgs:
+				m.state = stateMCPTools
+				m.cursor = 0
+				m.msg = ""
+			case stateMCPTools:
+				m.state = stateMCP
+				m.cursor = 0
+				m.msg = ""
+			case stateMCP:
+				m.state = stateMenu
+				m.cursor = 0
+				m.msg = ""
+			case stateHosts, stateJobs, stateKeys:
 				m.state = stateMenu
 				m.cursor = 0
 				m.msg = ""
 			}
 		case "backspace":
-			if m.state != stateMenu && len(m.filter) > 0 {
+			if m.state == stateMCPArgs && len(m.inputBuf) > 0 {
+				m.inputBuf = m.inputBuf[:len(m.inputBuf)-1]
+			} else if m.state != stateMenu && len(m.filter) > 0 {
 				m.filter = m.filter[:len(m.filter)-1]
 				m.applyFilter()
 			}
 		default:
-			if m.state != stateMenu && len(msg.String()) == 1 {
+			if m.state == stateMCPArgs {
+				m.inputBuf += msg.String()
+			} else if m.state != stateMenu && len(msg.String()) == 1 {
 				m.filter += msg.String()
 				m.applyFilter()
 			}
@@ -139,6 +213,8 @@ func (m *model) handleEnter() (tea.Model, tea.Cmd) {
 			m.state = stateKeys
 			m.loadKeys()
 		case 3:
+			m.state = stateMCP
+		case 4:
 			return m, tea.Quit
 		}
 		m.cursor = 0
@@ -158,6 +234,27 @@ func (m *model) handleEnter() (tea.Model, tea.Cmd) {
 			k := m.keys[m.cursor]
 			m.msg = fmt.Sprintf("Key %s (%s)", k.Name, k.Fingerprint)
 		}
+	case stateMCP:
+		names := mcpServerNames(m.mcpServers)
+		if m.cursor < len(names) {
+			m.selectedServer = names[m.cursor]
+			return m, m.listMCPToolsCmd(m.mcpServers[m.selectedServer])
+		}
+	case stateMCPTools:
+		if m.cursor < len(m.mcpTools) {
+			t := m.mcpTools[m.cursor]
+			m.selectedTool = t.Name
+			m.state = stateMCPArgs
+			m.inputBuf = "{}"
+			m.cursor = 0
+			m.msg = fmt.Sprintf("Tool: %s - %s", t.Name, t.Description)
+		}
+	case stateMCPArgs:
+		return m, m.callMCPToolCmd(m.mcpServers[m.selectedServer], m.selectedTool, m.inputBuf)
+	case stateMCPResult:
+		m.state = stateMCPTools
+		m.cursor = 0
+		m.msg = ""
 	}
 	return m, nil
 }
@@ -186,6 +283,40 @@ func (m *model) loadKeys() {
 	m.keys = keys
 }
 
+func (m *model) listMCPToolsCmd(srv config.MCPClientConfig) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		tools, err := mcp.ListTools(ctx, srv)
+		return mcpToolsMsg{tools: tools, err: err}
+	}
+}
+
+func (m *model) callMCPToolCmd(srv config.MCPClientConfig, toolName, args string) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		res, err := mcp.CallToolString(ctx, srv, toolName, args)
+		return mcpCallMsg{result: res, err: err}
+	}
+}
+
+func mcpServerNames(servers map[string]config.MCPClientConfig) []string {
+	names := make([]string, 0, len(servers))
+	for name := range servers {
+		names = append(names, name)
+	}
+	// Sort for stable ordering
+	for i := 0; i < len(names); i++ {
+		for j := i + 1; j < len(names); j++ {
+			if names[j] < names[i] {
+				names[i], names[j] = names[j], names[i]
+			}
+		}
+	}
+	return names
+}
+
 func (m model) View() string {
 	switch m.state {
 	case stateMenu:
@@ -196,12 +327,20 @@ func (m model) View() string {
 		return m.viewJobs()
 	case stateKeys:
 		return m.viewKeys()
+	case stateMCP:
+		return m.viewMCP()
+	case stateMCPTools:
+		return m.viewMCPTools()
+	case stateMCPArgs:
+		return m.viewMCPArgs()
+	case stateMCPResult:
+		return m.viewMCPResult()
 	}
 	return ""
 }
 
 func (m model) viewMenu() string {
-	items := []string{"Hosts", "Sync Jobs", "Keys", "Quit"}
+	items := []string{"Hosts", "Sync Jobs", "Keys", "MCP", "Quit"}
 	var b strings.Builder
 	b.WriteString(titleStyle.Render("ssh-helper") + "\n\n")
 	for i, item := range items {
@@ -276,6 +415,68 @@ func (m model) viewKeys() string {
 		b.WriteString("\n" + m.msg + "\n")
 	}
 	b.WriteString("\n" + helpStyle.Render("↑/↓ navigate • esc back"))
+	return b.String()
+}
+
+func (m model) viewMCP() string {
+	var b strings.Builder
+	b.WriteString(titleStyle.Render("MCP Servers") + "\n\n")
+	names := mcpServerNames(m.mcpServers)
+	for i, name := range names {
+		cursor := " "
+		if m.cursor == i {
+			cursor = ">"
+			b.WriteString(selected.Render(fmt.Sprintf("%s %s", cursor, name)) + "\n")
+		} else {
+			b.WriteString(itemStyle.Render(fmt.Sprintf("%s %s", cursor, name)) + "\n")
+		}
+	}
+	if m.msg != "" {
+		b.WriteString("\n" + m.msg + "\n")
+	}
+	b.WriteString("\n" + helpStyle.Render("↑/↓ navigate • enter connect • esc back"))
+	return b.String()
+}
+
+func (m model) viewMCPTools() string {
+	var b strings.Builder
+	b.WriteString(titleStyle.Render(fmt.Sprintf("MCP Tools (%s)", m.selectedServer)) + "\n\n")
+	for i, t := range m.mcpTools {
+		cursor := " "
+		if m.cursor == i {
+			cursor = ">"
+			b.WriteString(selected.Render(fmt.Sprintf("%s %s - %s", cursor, t.Name, t.Description)) + "\n")
+		} else {
+			b.WriteString(itemStyle.Render(fmt.Sprintf("%s %s", cursor, t.Name)) + "\n")
+		}
+	}
+	if m.msg != "" {
+		b.WriteString("\n" + m.msg + "\n")
+	}
+	b.WriteString("\n" + helpStyle.Render("↑/↓ navigate • enter select • esc back"))
+	return b.String()
+}
+
+func (m model) viewMCPArgs() string {
+	var b strings.Builder
+	b.WriteString(titleStyle.Render(fmt.Sprintf("Call %s", m.selectedTool)) + "\n\n")
+	b.WriteString(helpStyle.Render("JSON arguments:") + "\n")
+	b.WriteString(m.inputBuf + "\n")
+	if m.msg != "" {
+		b.WriteString("\n" + m.msg + "\n")
+	}
+	b.WriteString("\n" + helpStyle.Render("type to edit • enter call • esc back"))
+	return b.String()
+}
+
+func (m model) viewMCPResult() string {
+	var b strings.Builder
+	b.WriteString(titleStyle.Render("Result") + "\n\n")
+	b.WriteString(m.mcpResult + "\n")
+	if m.msg != "" {
+		b.WriteString("\n" + m.msg + "\n")
+	}
+	b.WriteString("\n" + helpStyle.Render("enter/esc back"))
 	return b.String()
 }
 

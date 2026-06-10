@@ -151,7 +151,7 @@ func newSyncJobRunCommand() *cobra.Command {
 			}
 			var job core.SyncJob
 			for _, j := range jobs {
-				if j.ID == args[0] || len(j.ID) >= len(args[0]) && j.ID[:len(args[0])] == args[0] {
+				if j.ID == args[0] {
 					job = j
 					break
 				}

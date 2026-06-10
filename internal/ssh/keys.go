@@ -67,6 +67,7 @@ func GenerateKey(sshDir, name, keyType string) error {
 	if err := os.MkdirAll(sshDir, 0o700); err != nil {
 		return fmt.Errorf("create ssh dir: %w", err)
 	}
+	name = SanitizeKeyName(name)
 	privPath := filepath.Join(sshDir, name)
 	pubPath := privPath + ".pub"
 
@@ -114,6 +115,13 @@ func GenerateKey(sshDir, name, keyType string) error {
 func RemoveKey(privPath string) error {
 	_ = os.Remove(privPath + ".pub")
 	return os.Remove(privPath)
+}
+
+func SanitizeKeyName(name string) string {
+	name = strings.ReplaceAll(name, "..", "_")
+	name = strings.ReplaceAll(name, "/", "_")
+	name = strings.ReplaceAll(name, "\\", "_")
+	return name
 }
 
 // CopyID copies the public key to the remote host over the provided SSH client.

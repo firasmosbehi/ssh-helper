@@ -116,6 +116,18 @@ func BackupConfig(path string) (string, error) {
 
 // AddHost appends a Host block to the SSH config file.
 func AddHost(path string, host core.Host) error {
+	if err := validateHostField(host.Name); err != nil {
+		return err
+	}
+	if err := validateHostField(host.Hostname); err != nil {
+		return err
+	}
+	if err := validateHostField(host.User); err != nil {
+		return err
+	}
+	if err := validateHostField(host.IdentityFile); err != nil {
+		return err
+	}
 	if err := ensureNewline(path); err != nil {
 		return err
 	}
@@ -142,6 +154,13 @@ func AddHost(path string, host core.Host) error {
 	_, err = f.WriteString(b.String())
 	if err != nil {
 		return fmt.Errorf("append host: %w", err)
+	}
+	return nil
+}
+
+func validateHostField(v string) error {
+	if strings.ContainsAny(v, "\n\r") {
+		return fmt.Errorf("invalid field value: contains newlines")
 	}
 	return nil
 }

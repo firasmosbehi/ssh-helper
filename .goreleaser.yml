@@ -1,0 +1,83 @@
+version: 2
+
+project_name: ssh-helper
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: ssh-helper
+    main: ./cmd/ssh-helper
+    binary: ssh-helper
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore"
+
+brews:
+  - name: ssh-helper
+    repository:
+      owner: firasmosbehi
+      name: homebrew-tap
+    homepage: "https://github.com/firasmosbehi/ssh-helper"
+    description: "CLI + TUI + GUI tool for managing SSH and rsync"
+    license: "MIT"
+    test: |
+      system "#{bin}/ssh-helper", "--version"
+    dependencies:
+      - name: openssh
+    install: |
+      bin.install "ssh-helper"
+
+scoops:
+  - repository:
+      owner: firasmosbehi
+      name: scoop-bucket
+    homepage: "https://github.com/firasmosbehi/ssh-helper"
+    description: "CLI + TUI + GUI tool for managing SSH and rsync"
+    license: MIT
+
+# Code signing (requires certificates in repo secrets)
+# signs:
+#   - artifacts: checksum
+#     args: ["--output", "${signature}", "--detach-sign", "${artifact}"]

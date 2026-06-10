@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/firasmosbehi/ssh-helper/internal/core"
@@ -22,7 +23,15 @@ func NewJSONStore(dir string) *JSONStore {
 }
 
 func (s *JSONStore) path(name string) string {
-	return filepath.Join(s.dir, name+".json")
+	return filepath.Join(s.dir, sanitizeName(name)+".json")
+}
+
+func sanitizeName(name string) string {
+	// Prevent path traversal by replacing separators and dots
+	name = strings.ReplaceAll(name, "..", "_")
+	name = strings.ReplaceAll(name, "/", "_")
+	name = strings.ReplaceAll(name, "\\", "_")
+	return name
 }
 
 func (s *JSONStore) read(name string, out interface{}) error {

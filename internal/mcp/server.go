@@ -127,15 +127,18 @@ func handleRunCommand(cfg *config.Config) server.ToolHandlerFunc {
 		}
 		host := req.GetString("host", "")
 		cmd := req.GetString("command", "")
+		if strings.ContainsAny(cmd, ";|&`$(){}[]\n\r") {
+			return mcp.NewToolResultError("command contains invalid characters"), nil
+		}
 		opts, err := resolveHost(cfg, host)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
 		out, err := ssh.RunCommand(opts, cmd)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("%v\n%s", err, out)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("%v\n%s", err, truncate(out, 2000))), nil
 		}
-		return mcp.NewToolResultText(out), nil
+		return mcp.NewToolResultText(truncate(out, 2000)), nil
 	}
 }
 
@@ -144,17 +147,22 @@ func handleTransferFiles(cfg *config.Config) server.ToolHandlerFunc {
 		if !req.GetBool("confirm", false) {
 			return mcp.NewToolResultError("confirmation required: set confirm=true"), nil
 		}
+		source := req.GetString("source", "")
+		dest := req.GetString("dest", "")
+		if strings.HasPrefix(source, "-") || strings.HasPrefix(dest, "-") {
+			return mcp.NewToolResultError("source/dest cannot start with '-'"), nil
+		}
 		job := core.SyncJob{
-			Source: req.GetString("source", ""),
-			Dest:   req.GetString("dest", ""),
+			Source: source,
+			Dest:   dest,
 			DryRun: req.GetBool("dry_run", false),
 		}
 		runner := rsync.Runner{Job: job}
 		res := runner.Run(ctx, rsync.RunOptions{CaptureLog: true})
 		if res.Error != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("%v\n%s", res.Error, res.Log)), nil
+			return mcp.NewToolResultError(fmt.Sprintf("%v\n%s", res.Error, truncate(res.Log, 2000))), nil
 		}
-		return mcp.NewToolResultText(res.Log), nil
+		return mcp.NewToolResultText(truncate(res.Log, 2000)), nil
 	}
 }
 
@@ -176,6 +184,9 @@ func handleGenerateKey() server.ToolHandlerFunc {
 			return mcp.NewToolResultError("confirmation required: set confirm=true"), nil
 		}
 		name := req.GetString("name", "")
+		if strings.ContainsAny(name, "/\\") || strings.Contains(name, "..") {
+			return mcp.NewToolResultError("invalid key name"), nil
+		}
 		keyType := req.GetString("type", "ed25519")
 		home, _ := os.UserHomeDir()
 		if err := ssh.GenerateKey(filepath.Join(home, ".ssh"), name, keyType); err != nil {
@@ -216,7 +227,7 @@ func handleRunSyncJob() server.ToolHandlerFunc {
 		}
 		var job core.SyncJob
 		for _, j := range jobs {
-			if strings.HasPrefix(j.ID, id) {
+			if j.ID == id {
 				job = j
 				break
 			}
@@ -249,6 +260,13 @@ func resolveHost(cfg *config.Config, name string) (ssh.ConnectOptions, error) {
 		opts.Port = 22
 	}
 	return opts, nil
+}
+
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "... [truncated]"
 }
 
 func getStore() (store.Store, error) {

@@ -29,6 +29,7 @@ func (r *Runner) BuildArgs() []string {
 		args = append(args, "--exclude", e)
 	}
 	args = append(args, r.Job.Flags...)
+	args = append(args, "--")
 	args = append(args, r.Job.Source, r.Job.Dest)
 	return args
 }

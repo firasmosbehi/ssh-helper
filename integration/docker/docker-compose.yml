@@ -1,0 +1,7 @@
+services:
+  ssh-server:
+    build: .
+    ports:
+      - "2222:22"
+    volumes:
+      - ./data:/data
