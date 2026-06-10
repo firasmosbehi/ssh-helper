@@ -1,0 +1,17 @@
+title: ssh-helper
+description: CLI + TUI + GUI tool for managing SSH and rsync
+theme: jekyll-theme-cayman
+baseurl: /ssh-helper
+url: https://firasmosbehi.github.io
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: true
+include:
+  - index.md
+  - installation.md
+  - cli.md
+  - tui.md
+  - mcp.md
+  - security.md

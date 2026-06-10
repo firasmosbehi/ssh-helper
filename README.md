@@ -1,15 +1,82 @@
 # ssh-helper
 
+[![CI](https://github.com/firasmosbehi/ssh-helper/actions/workflows/ci.yml/badge.svg)](https://github.com/firasmosbehi/ssh-helper/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/firasmosbehi/ssh-helper)](https://github.com/firasmosbehi/ssh-helper/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 CLI + TUI + GUI tool for managing SSH connections, keys, configs and running rsync transfers.
 
 Built in Go. Ships as a single binary.
 
-## Interfaces
+## Features
 
-- **CLI**: fast commands for scripts and terminal power users (`ssh-helper connect`, `ssh-helper sync`, ...).
-- **TUI**: interactive terminal UI powered by Bubble Tea.
-- **GUI**: native desktop UI powered by Fyne.
-- **MCP**: acts as an MCP server (expose SSH/rsync tools to AI agents) and MCP client (call external MCP servers).
+- **SSH Host Management** — parse, list, add, edit and connect to hosts from `~/.ssh/config`.
+- **SSH Key Management** — list, generate, remove keys and copy public keys to remote hosts.
+- **rsync Jobs** — run one-off transfers or save/sync recurring jobs with live progress.
+- **Terminal UI** — interactive Bubble Tea app for browsing hosts, jobs and keys.
+- **Desktop GUI** — native Fyne interface for host, job, key and MCP management (CGO builds).
+- **MCP Server & Client** — expose SSH/rsync tools to MCP consumers and call external MCP servers.
+- **Cross-Platform** — Linux, macOS and Windows binaries.
+
+## Install
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew tap firasmosbehi/tap
+brew install ssh-helper
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add ssh-helper https://github.com/firasmosbehi/scoop-bucket
+scoop install ssh-helper
+```
+
+### Go
+
+```bash
+go install github.com/firasmosbehi/ssh-helper/cmd/ssh-helper@latest
+```
+
+### Download
+
+Grab a pre-built binary from the [releases page](https://github.com/firasmosbehi/ssh-helper/releases).
+
+## Quick start
+
+```bash
+# Initialize configuration
+ssh-helper config init
+
+# List hosts from ~/.ssh/config
+ssh-helper host list
+
+# Connect to a host
+ssh-helper host connect myserver
+
+# Run a one-off rsync transfer
+ssh-helper sync run ./local/dir/ user@host:/remote/dir/
+
+# Launch the TUI
+ssh-helper tui
+
+# Launch the GUI (CGO-enabled builds only)
+ssh-helper gui
+
+# Start the MCP server
+ssh-helper mcp serve
+```
+
+## Documentation
+
+- [Full documentation](https://firasmosbehi.github.io/ssh-helper/)
+- [Installation guide](docs/installation.md)
+- [CLI reference](docs/cli.md)
+- [TUI cheatsheet](docs/tui.md)
+- [MCP schema](docs/mcp.md)
+- [Security model](docs/security.md)
 
 ## Project layout
 
@@ -27,42 +94,7 @@ internal/            # Private application code
   platform/          # OS-specific helpers
 pkg/api/             # Public library API
 docs/                # Documentation
-scripts/             # Development scripts
 ```
-
-## Quick start
-
-### Build
-
-```bash
-go build -o ssh-helper ./cmd/ssh-helper
-```
-
-### Run
-
-```bash
-# Show help
-./ssh-helper --help
-
-# Initialize config
-./ssh-helper config init
-
-# List hosts from ~/.ssh/config
-./ssh-helper host list
-
-# Start TUI
-./ssh-helper tui
-
-# Start GUI
-./ssh-helper gui
-
-# Run MCP server
-./ssh-helper mcp serve
-```
-
-## Documentation
-
-See [docs/](docs/).
 
 ## Contributing
 
